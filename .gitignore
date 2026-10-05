@@ -1,4 +1,5 @@
 # Local data: database, clip archive, rendered clips, model cache.
+/.freebuff/
 data/
 *.db
 *.db-wal
