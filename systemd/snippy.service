@@ -1,0 +1,35 @@
+[Unit]
+Description=Snippy, a Discord voice clipper
+Documentation=https://github.com/yourname/snippy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Substituted by install.sh with the absolute path of this checkout and its
+# virtualenv interpreter.
+WorkingDirectory=@ROOT@
+ExecStart=@PYTHON@ -m snippy
+Restart=always
+RestartSec=5
+
+# A voice bot is a long-lived network client: let it finish uploading a clip
+# and flushing its archive on the way down instead of killing it outright.
+KillSignal=SIGINT
+TimeoutStopSec=30
+
+# Logs go to the journal, so this file stays empty and there is nothing to
+# rotate. Raise this if you run with --log-level DEBUG and want the detail.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=snippy
+
+Environment=PYTHONUNBUFFERED=1
+# The token is read from .env in the working directory; the unit deliberately
+# does not embed it.
+
+# A gentle ceiling so a runaway render cannot take the machine with it.
+MemoryMax=1G
+
+[Install]
+WantedBy=default.target

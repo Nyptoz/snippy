@@ -1,0 +1,21 @@
+# Local data: database, clip archive, rendered clips, model cache.
+data/
+*.db
+*.db-wal
+*.db-shm
+*.opus
+*.ogg
+*.wav
+*.mp3
+*.zip
+
+# Secrets
+.env
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/

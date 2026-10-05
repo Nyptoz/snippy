@@ -1,0 +1,159 @@
+# Snippy defaults.
+#
+# This file sets the baseline for every guild. Admins override any of it at
+# runtime with the /snippy config commands, which persist per-guild settings in
+# SQLite. Anything set here still applies to guilds that never touched a
+# setting, so it doubles as documentation of the valid range for each knob.
+
+[audio]
+# Hard ceiling on clip length, in seconds. The bot refuses to render anything
+# longer no matter what a user asks for.
+max_clip_seconds = 120.0
+# What /clip grabs when no window is given.
+default_window = 15.0
+# Padding kept before the trigger and after the last detected word.
+pre_roll = 1.5
+post_roll = 1.5
+# One of: mix, stems, solo, duet, active, duck
+default_style = "mix"
+# Opus bitrate for rendered clips. 48k is plenty for speech and keeps a
+# two-minute clip under 1 MB.
+bitrate = "48k"
+# Remove leading and trailing silence from every clip.
+silence_trim = true
+# Run loudness normalization so quiet and loud callers land at the same level.
+normalize = true
+# Fade in/out applied to the clip edges, in milliseconds.
+fade_ms = 20
+
+[ring]
+# How much audio is held in RAM for instant retroactive clipping. The mix ring
+# is the one /clip slices from.
+mix_seconds = 60.0
+# Per-speaker full-rate ring, used by solo, duet, and stems.
+stem_seconds = 20.0
+# Low-rate mono track used for voice activity detection and transcription.
+vad_seconds = 120.0
+# Upper bound on simultaneous per-speaker rings. Extra speakers fall back to
+# the mixed ring rather than growing memory without limit.
+max_stem_users = 8
+# Total ceiling for all in-memory audio across every active session. The
+# startup planner shrinks the per-session windows to stay under this.
+memory_budget_mb = 256
+
+[archive]
+# Rolling on-disk Opus archive. This is what makes /reclip from yesterday and
+# /replay work; the RAM rings only cover the recent past.
+enabled = true
+# How long the archive is kept. Oldest segments are deleted first.
+retention_hours = 24.0
+# Archive length of a single segment file before rotation.
+segment_seconds = 300.0
+# Bitrate for archived audio. Lower than rendered clips, since archive audio is
+# a source to be re-cut rather than a deliverable.
+bitrate = "32k"
+# Also archive individual speakers, at a shorter retention. Off by default
+# because it costs one encoder per active speaker.
+archive_stems = false
+stem_retention_hours = 2.0
+# Disk ceiling for the archive. Snippy trims the oldest segments when exceeded.
+quota_mb = 5120
+
+[trigger]
+# Spoken trigger detection. Requires the optional ASR extra.
+spoken = true
+# Phrases that end a clip. Matched after normalization, with fuzzy fallback, so
+# "hey snippy clip this" and "clip that bit" both work.
+phrases = [
+    "hey snippy clip this",
+    "snippy clip this",
+    "clip this",
+    "clip that",
+    "clip it",
+    "clip that bit",
+    "clip that part",
+    "clip me",
+    "save that",
+    "make that a clip",
+]
+# Play/replay intents, same matching rules.
+replay_phrases = [
+    "snippy replay that",
+    "replay that",
+    "play that again",
+    "play that back",
+    "snippy rewind",
+    "rewind that",
+]
+# Respond to the trigger phrase typed in a text channel.
+text = false
+# Similarity floor for fuzzy phrase matching, 0.0 to 1.0.
+fuzzy_threshold = 0.82
+# Utterances shorter than this are ignored as too short to be an intentional
+# trigger.
+min_utterance_ms = 400
+# Longer utterances are truncated; nobody says a trigger phrase in a monologue.
+max_utterance_seconds = 6.0
+# Seconds of audio kept after the trigger phrase ends before the clip is cut.
+spoken_post_roll = 2.5
+
+[delivery]
+# One of: channel, dm, both, here
+#   channel -> the configured clip channel
+#   dm      -> a direct message to whoever clipped
+#   both    -> the clip channel and a DM
+#   here    -> the text channel nearest the voice channel
+destination = "channel"
+# Empty means "create or find #snippy-clips automatically".
+clip_channel_name = "snippy-clips"
+# Group every clip from one voice session into its own thread.
+thread_per_session = true
+# Upload a public copy by default when the requester clipped privately.
+make_public = true
+# Ping the requester when their clip is posted publicly.
+mention_on_clip = false
+
+[privacy]
+# Users that are always zeroed out of mixes, stems, and transcripts.
+ignored_users = []
+# If non-empty, only these roles may issue clip commands.
+allowed_roles = []
+# Post a one-line notice when Snippy starts recording in a channel.
+consent_banner = true
+# Show a recording indicator in the voice channel status.
+recording_indicator = true
+# Allow clipping an individual speaker's audio.
+allow_solo = true
+# Allow multi-speaker stems to be uploaded.
+allow_stems = true
+
+[join]
+# One of: always, whitelist, ondemand
+#   always     -> join any voice channel that has someone in it
+#   whitelist  -> only join channels listed below
+#   ondemand   -> only join when someone runs /session join
+policy = "always"
+channels = []
+# Leave an empty channel after this long. 0 disables leaving.
+idle_leave_minutes = 10.0
+
+[asr]
+# Off by default so a plain install stays tiny. install.sh flips this when you
+# accept the spoken trigger extra.
+enabled = false
+model = "tiny.en"
+device = "cpu"
+compute_type = "int8"
+language = "en"
+# Attach transcripts to posted clips.
+show_transcript = true
+# Index transcripts for /search.
+index_search = true
+
+[safety]
+# Per-user clip rate limit.
+clips_per_hour = 30
+# Ceiling an admin may configure for archive retention.
+max_retention_hours = 720.0
+# Delete the rendered file from disk once it has been uploaded.
+delete_after_upload = true

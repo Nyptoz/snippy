@@ -1,0 +1,9 @@
+# Optional extra: spoken trigger phrases, transcripts, and transcript search.
+# Installed by ./install.sh when you answer yes to spoken triggers.
+#
+# faster-whisper pulls ctranslate2, which is a large binary wheel but still
+# CPU-only and does not require a GPU. The "tiny.en" model used by default is
+# roughly 75 MB and transcribes short commands far faster than realtime.
+
+-r requirements.txt
+faster-whisper>=1.0

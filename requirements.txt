@@ -1,0 +1,13 @@
+# Snippy runtime dependencies.
+#
+# Python 3.11 or 3.12 is the low-friction target. On 3.13+ the stdlib `audioop`
+# module was removed, so install.sh pins `audioop-lts` automatically for you.
+
+discord.py[voice]>=2.4,<3
+# This extension only publishes alpha releases. Naming a prerelease explicitly
+# in the specifier is what lets pip install it without a global --pre flag.
+discord-ext-voice-recv>=0.5.2a179,<1
+av>=11
+numpy>=1.24
+Pillow>=10.0
+python-dotenv>=1.0
