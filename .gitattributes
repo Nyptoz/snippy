@@ -1,0 +1,6 @@
+# cmd.exe needs CRLF in .bat files; without it, labels and `goto` can break
+# when the file is checked out on a machine with autocrlf turned off.
+*.bat text eol=crlf
+
+# Shell scripts must stay LF or bash will choke on the carriage returns.
+*.sh text eol=lf

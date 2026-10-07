@@ -15,6 +15,7 @@ from __future__ import annotations
 import importlib.util
 import inspect
 import os
+import re
 import asyncio
 from types import SimpleNamespace
 from typing import Any, get_args, get_origin
@@ -357,3 +358,46 @@ def test_check_uses_the_real_voice_recv_import_path():
     assert '"voice_recv"' not in source
     # And the module really does live there on this install.
     assert importlib.util.find_spec("discord.ext.voice_recv") is not None
+
+
+# -- startup lifecycle ----------------------------------------------------
+
+
+async def test_on_ready_reconciles_through_the_session_manager(bot: Snippy):
+    """``on_ready`` must call the real SessionManager API.
+
+    It used to call ``self.reconcile_sessions(guild.id)``, a method that has
+    never existed. discord.py swallows exceptions raised from ``on_ready`` and
+    merely logs them, so the bot logged in, then silently never joined a single
+    channel according to the join policy -- invisible without a live gateway.
+    """
+    calls: list[tuple[str, Any]] = []
+
+    async def fake_sync():
+        calls.append(("sync", None))
+
+    async def fake_reconcile(config_for):
+        calls.append(("reconcile", config_for))
+
+    bot.sync_commands = fake_sync
+    bot.sessions.reconcile = fake_reconcile
+
+    await bot.on_ready()
+
+    assert calls[0][0] == "sync"
+    assert [name for name, _ in calls] == ["sync", "reconcile"]
+    passed = calls[1][1]
+    # reconcile wants the config callback, not a guild id.
+    assert inspect.iscoroutinefunction(passed)
+
+
+def test_on_ready_only_uses_attributes_that_exist(bot: Snippy):
+    """Every ``self.X`` referenced by ``on_ready`` must resolve on the instance.
+
+    A cheap structural guard for the whole family of bugs the test above
+    caught: discord.py reports a missing method only after a real login.
+    """
+    source = inspect.getsource(Snippy.on_ready)
+    referenced = set(re.findall(r"self\.(\w+)", source))
+    missing = sorted(name for name in referenced if not hasattr(bot, name))
+    assert missing == [], f"on_ready references attributes that do not exist: {missing}"

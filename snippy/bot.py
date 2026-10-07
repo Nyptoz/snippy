@@ -113,8 +113,9 @@ class Snippy(commands.Bot):
     async def on_ready(self) -> None:
         log.info("logged in as %s", self.user)
         await self.sync_commands()
-        for guild in self.guilds:
-            await self.reconcile_sessions(guild.id)
+        # SessionManager.reconcile walks every guild on its own and applies the
+        # join policy, so there is nothing to loop over here.
+        await self.sessions.reconcile(self.config_for)
         self._announce_asr()
 
     async def sync_commands(self) -> None:
